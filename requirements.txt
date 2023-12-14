@@ -1,0 +1,5 @@
+# for tokentranslator
+pulp == 2.0
+pyschedule
+pandas >= 1.1.5
+numpy >= 1.18.5

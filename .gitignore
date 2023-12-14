@@ -1,0 +1,14 @@
+*.pyc
+*~
+__pycache__/
+TAGS
+*.log
+*.egg-info/
+*.egg-info/*
+*.egg-info/**
+build/
+build/*
+build/**
+dist/
+dist/*
+dist/**
