@@ -41,7 +41,7 @@ if __name__ == "__main__":
         description="some helpful tools",
         long_description=long_description,
         long_description_content_type="text/markdown",
-        url="https://github.com/tra-group/tra-tools",
+        url="https://github.com/tokentranslator-group/tratools",
         packages=lpackages,
         include_package_data=True,
         
