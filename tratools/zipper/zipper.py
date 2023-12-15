@@ -56,6 +56,12 @@ class Entry():
         return entries
 
     def to_pandas(self, entries):
+        '''
+            # for convertin DataFrame to entries and back:
+            entries = list(self.ientry.to_entries(df))
+            df1 = self.ientry.to_pandas(entries)
+
+        '''
         df = self.init_df()
         for entry in entries:
             # ignore_index to generate new index for anew entry: 
@@ -70,35 +76,43 @@ class Entry():
     def to_args(self):
         # drop what is NaNs:
         df = self.attrs_values_entry.dropna(axis="columns", how="all")
-
         # return first and only entry
         return list(df.to_numpy()[0])
 
     def succ(self, attrs_values_entry):
         '''Will produce another instance with the same
         properties.
-        Entry should be the DataFrame, otherwise 
+        Entry should be the Series, otherwise 
         the values in attrs_values_entry (list like)
         should match following attributes of self:
         self.attrs_names+self.param_names+self.attrs_targets'''
 
-        if type(attrs_values_entry) == pd.DataFrame:
+        # print(type(attrs_values_entry))
+        ''' TODO: dropna(all) in to_args also should be considered
+        for that case:
+        if type(attrs_values_entry) == pd.Series:
             new_attrs_values_entry = attrs_values_entry.copy()
-        else:
-            df = self.init_df()
-            
-            columns = self.attrs_names + self.param_names
-            columns.extend(self.attrs_targets)
-        
-            new_attrs_values_entry = df.append(dict(zip(
-                columns, attrs_values_entry)), ignore_index=True)
+            # print("new_attrs_values_entry:")
             # print(new_attrs_values_entry)
+        else:
+        '''
+        df = self.init_df()
+        columns = self.attrs_names + self.param_names
+        columns.extend(self.attrs_targets)
+        
+        new_attrs_values_entry = df.append(dict(zip(
+            columns, attrs_values_entry)), ignore_index=True)
+        # print(new_attrs_values_entry)
         return(self.__class__(attrs_values_entry=new_attrs_values_entry))
 
     def to_entries(self, table):
         '''mapping of table of values to self.__class__
-        type
+        type.
         '''
+        if type(table) == pd.DataFrame:
+            index = list(table.index.array)
+            table = [table.loc[idx] for idx in index]
+        
         return(map(self.succ, table))
     
     def gen_states(self, count=None):
@@ -276,9 +290,12 @@ class Zipper():
 
         # convert to desired format:
         index = list(self.current.index.array)
-        return(self.ientry.to_entries(
-            [self.current.loc[idx] for idx in index]),
-               len(index))
+        return(self.ientry.to_entries(self.current), len(index))
+
+        # index = list(self.current.index.array)
+        # return(self.ientry.to_entries(
+        #     [self.current.loc[idx] for idx in index]),
+        #        len(index))
         # return self.current.to_numpy()
 
     def update(self, entries, k=0):
@@ -373,7 +390,8 @@ def test_zipper0():
     print("pack:")
     for e in pack:
         print(e.attrs_values_entry)
-
+    
+    print(zipper.ientry.to_pandas(pack))
     print("\ntodos after pack:")
     print(zipper.todos)
 

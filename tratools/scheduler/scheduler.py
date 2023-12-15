@@ -22,7 +22,7 @@ class CpuScheduler():
             if self.dbg:
                 print("================ running: scheduler.load:")
             df = self.load(pack)
-
+            
             if self.dbg:
                 print(df)
                 print("\n================ running: scheduler.group_by_named")
@@ -43,8 +43,9 @@ class CpuScheduler():
             if self.dbg:
                 print("\n================ running: scheduler.solve():")
             self.solve()
-            
-            self.plot()
+
+            if self.dbg:
+                self.plot()
 
     def __enter__(self):
         '''Clear the `self` state'''
@@ -264,23 +265,17 @@ class CpuScheduler():
             print("solution:")
             for s in self.solution:
                 print(s)
-            
+    
+    def sort(self, df):
+        pass
+
     def plot(self):
         assert hasattr(self, "tasks")
         tasks = self.tasks
 
         assert hasattr(self, "S")
         S = self.S
-        
-        print("tasks:")
-        for name in tasks:
-            print(
-                "name:", name,
-                "  | length: " if "length" in tasks[name] else "",
-                tasks[name]["length"] if "length" in tasks[name] else "",
-                
-                " | delay_cost: " if "delay_cost" in tasks[name] else "",
-                tasks[name]["delay_cost"] if "delay_cost" in tasks[name] else "")
+        self.print_solution()
                  
         # [Task(i, duration) for i in range(len(data))]
         # Resorces(num=cpu.count)
@@ -288,6 +283,25 @@ class CpuScheduler():
         
         plotters.matplotlib.plot(S, img_filename="tmp_selector_schedule.png")
         plt.show()
+
+    def print_solution(self, *args, **kwargs):
+        if hasattr(self, "tasks"):
+            print("\nScheduler tasks:")
+
+            tasks = self.tasks
+            for name in tasks:
+                print(
+                    "name:", name,
+                    "  | length: " if "length" in tasks[name] else "",
+                    tasks[name]["length"] if "length" in tasks[name] else "",
+
+                    " | delay_cost: " if "delay_cost" in tasks[name] else "",
+                    tasks[name]["delay_cost"] if "delay_cost" in tasks[name] else "")
+
+        if hasattr(self, "solution"):
+            print("\nScheduler solution:")
+            for cpu_schedule in self.solution:
+                print(cpu_schedule)
 
 
 def test():
