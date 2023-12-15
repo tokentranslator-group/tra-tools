@@ -1,5 +1,7 @@
 *.pyc
 *~
+*.png
+
 __pycache__/
 TAGS
 *.log

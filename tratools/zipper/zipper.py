@@ -50,7 +50,7 @@ class Entry():
             for entry in entries:
                 attrs_targets = entry.attrs_targets
                 attrs_gen_values = np.random.uniform(0, 1, len(attrs_targets))
-                self.update(attrs_targets, attrs_gen_values)
+                entry.update(attrs_targets, attrs_gen_values)
 
                 # entry.attrs_values_entry.loc[:, attrs_targets] = attrs_gen_values
         return entries
