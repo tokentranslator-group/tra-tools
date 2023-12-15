@@ -6,6 +6,11 @@ TAGS
 *.egg-info/
 *.egg-info/*
 *.egg-info/**
+
+result/
+result/*
+result/**
+
 build/
 build/*
 build/**

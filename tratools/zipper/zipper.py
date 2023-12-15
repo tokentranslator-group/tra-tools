@@ -50,7 +50,9 @@ class Entry():
             for entry in entries:
                 attrs_targets = entry.attrs_targets
                 attrs_gen_values = np.random.uniform(0, 1, len(attrs_targets))
-                entry.attrs_values_entry.loc[:, attrs_targets] = attrs_gen_values
+                self.update(attrs_targets, attrs_gen_values)
+
+                # entry.attrs_values_entry.loc[:, attrs_targets] = attrs_gen_values
         return entries
 
     def to_pandas(self, entries):
@@ -67,8 +69,10 @@ class Entry():
 
     def to_args(self):
         # drop what is NaNs:
-        df = self.attrs_values_entry.dropna(how="all")
-        return list(df.to_numpy())
+        df = self.attrs_values_entry.dropna(axis="columns", how="all")
+
+        # return first and only entry
+        return list(df.to_numpy()[0])
 
     def succ(self, attrs_values_entry):
         '''Will produce another instance with the same
@@ -109,6 +113,9 @@ class Entry():
                 lambda idxElm: idxElm[0] < max_step,
                 enumerate(it.product(*self.attrs_values)))))
         return states
+
+    def update(self, names, values):
+        self.attrs_values_entry.loc[:, names] = values
 
 
 class Zipper():
@@ -279,7 +286,7 @@ class Zipper():
         Return amount of appended.'''
         pack = self.ientry.to_pandas(entries)
         
-        self.dones = self.dones.append(pack)
+        self.dones = self.dones.append(pack, ignore_index=True)
         if self.use_backup:
             self.backup()
 
