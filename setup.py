@@ -22,6 +22,13 @@ if __name__ == "__main__":
     with open("README.md") as f:
         long_description = f.read()
 
+    # for requirements:
+    with open("requirements.txt") as f:
+        s_reguirements = f.read()
+    requirements = s_reguirements.split("\n")
+    print("\nINFO: requirements:")
+    print(requirements)
+
     installed = setup(
         
         name="tratools",
@@ -65,5 +72,5 @@ if __name__ == "__main__":
 
         setup_requires=['setuptools_scm >= 3.5.0'],
         # setup_requires=[ "setuptools_git >= 0.3", ],
-        # install_requires=requirements
+        install_requires=requirements
     )
