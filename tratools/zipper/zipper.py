@@ -65,7 +65,8 @@ class Entry():
         df = self.init_df()
         for entry in entries:
             # ignore_index to generate new index for anew entry: 
-            df = df.append(entry.attrs_values_entry, ignore_index=True)
+            df = pd.concat([df, entry.attrs_values_entry], ignore_index=True)
+            # df = df.append(entry.attrs_values_entry, ignore_index=True)
         return df
 
     def init_df(self):
@@ -99,9 +100,21 @@ class Entry():
         df = self.init_df()
         columns = self.attrs_names + self.param_names
         columns.extend(self.attrs_targets)
-        
+        # print("columns")
+        # print(columns)
+        # print("attrs_values_entry")
+        # print(attrs_values_entry)
+        d = pd.DataFrame(dict(zip(
+            columns,
+            map(lambda x: [x], attrs_values_entry))))
+
+        new_attrs_values_entry = pd.concat(
+            [df, d],
+            ignore_index=True)
+        '''
         new_attrs_values_entry = df.append(dict(zip(
             columns, attrs_values_entry)), ignore_index=True)
+        '''
         # print(new_attrs_values_entry)
         return(self.__class__(attrs_values_entry=new_attrs_values_entry))
 
@@ -252,8 +265,16 @@ class Zipper():
             
             # init todos:
             states = self.init_gen()
-            
+            # print(states)
             df_todos = self.init_df()
+            self.todos = (reduce(
+                lambda acc, state: pd.concat(
+                    [acc, pd.DataFrame(dict(zip(self.columns, map(lambda x: [x], state))))],
+                    
+                    # to append with anew generated index:
+                    ignore_index=True),
+                states, df_todos))
+            '''
             self.todos = (reduce(
                 lambda acc, state: acc.append(
                     dict(zip(self.columns, state)),
@@ -261,6 +282,7 @@ class Zipper():
                     # to append with anew generated index:
                     ignore_index=True),
                 states, df_todos))
+            '''
         if self.dbg:
             print("todos:")
             print(self.todos)
@@ -303,7 +325,8 @@ class Zipper():
         Return amount of appended.'''
         pack = self.ientry.to_pandas(entries)
         
-        self.dones = self.dones.append(pack, ignore_index=True)
+        self.dones = pd.concat([self.dones, pack], ignore_index=True)
+        # self.dones = self.dones.append(pack, ignore_index=True)
         if self.use_backup:
             self.backup()
 

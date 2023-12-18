@@ -26,6 +26,8 @@ if __name__ == "__main__":
     with open("requirements.txt") as f:
         s_reguirements = f.read()
     requirements = s_reguirements.split("\n")
+    # requirements = [';'.join([r for r in requirements if len(r) > 0])]
+    requirements = [r for r in requirements if len(r) > 0]
     print("\nINFO: requirements:")
     print(requirements)
 
@@ -73,4 +75,6 @@ if __name__ == "__main__":
         setup_requires=['setuptools_scm >= 3.5.0'],
         # setup_requires=[ "setuptools_git >= 0.3", ],
         install_requires=requirements
+        
     )
+    

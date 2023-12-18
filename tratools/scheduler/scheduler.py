@@ -1,9 +1,27 @@
 import numpy as np
 from functools import reduce
 
-from pyschedule import Scenario, solvers, plotters, alt
+import sys
+try:
+    import pyschedule as sch
+except:
+    
+    print("the pyschedule lib requires the python3.6")
+    print("You python version is:")
+    print(sys.version)
+    sch = None
 
 import matplotlib.pyplot as plt
+
+
+class PySchedulerNotSupportedException(Exception):
+    def __init__(self, *args, **kwargs):
+        # self.exception = exception
+        msg = (
+            "\n\nThe `pyschedule` lib requires the `python3.6`"
+            + "\nYour python version is:"
+            + "\n" + sys.version)
+        Exception.__init__(self, msg, **kwargs)
 
 
 class CpuScheduler():
@@ -223,8 +241,12 @@ class CpuScheduler():
         horizon = int(time_length/(cpu_count))
         if self.dbg:
             print("horizon:", horizon)
-        
-        S = Scenario('selector', horizon=horizon)
+    
+        if sch is not None:
+            S = sch.Scenario('selector', horizon=horizon)
+        else:
+            raise(PySchedulerNotSupportedException())
+
         tasks_obj = dict([
             (name,
              S.Tasks(
@@ -254,10 +276,14 @@ class CpuScheduler():
         R = S.Resources("cpu", num=cpu_count)
         if self.dbg:
             print("R:", R)
-        for name in tasks_obj:
-            tasks_obj[name] += alt(R)
 
-        solvers.mip.solve(S, msg=1)
+        if sch is None:
+            raise(PySchedulerNotSupportedException())
+
+        for name in tasks_obj:
+            tasks_obj[name] += sch.alt(R)
+
+        sch.solvers.mip.solve(S, msg=1)
         self.S = S
 
         self.solution = S.solution()
@@ -280,8 +306,9 @@ class CpuScheduler():
         # [Task(i, duration) for i in range(len(data))]
         # Resorces(num=cpu.count)
         # S.solve()
-        
-        plotters.matplotlib.plot(S, img_filename="tmp_selector_schedule.png")
+        if sch is None:
+            raise(PySchedulerNotSupportedException())
+        sch.plotters.matplotlib.plot(S, img_filename="tmp_selector_schedule.png")
         plt.show()
 
     def print_solution(self, *args, **kwargs):
