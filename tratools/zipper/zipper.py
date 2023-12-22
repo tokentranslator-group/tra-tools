@@ -40,16 +40,22 @@ class Entry():
         self.attrs_values_entry = attrs_values_entry
         self.max_step = max_step
 
-    def gen(self, n, fill_targets=True):
+    def gen(self, n, fill_targets=True, fill_random=True):
         '''
         - ``fill_targets`` -- if true then assume the targets attributes values
-        have not been given and generate them randomly'''
+        have not been given and generate them randomly
+        - ``fill_random`` -- define whether the value will
+        be randomly generated or determined (for testing say).
+        '''
 
         entries = list(self.to_entries(self.gen_states(count=n)))
         if fill_targets:
-            for entry in entries:
+            for idx, entry in enumerate(entries):
                 attrs_targets = entry.attrs_targets
-                attrs_gen_values = np.random.uniform(0, 1, len(attrs_targets))
+                if fill_random:
+                    attrs_gen_values = np.random.uniform(0, 1, len(attrs_targets))
+                else:
+                    attrs_gen_values = idx*np.ones(len(attrs_targets))
                 entry.update(attrs_targets, attrs_gen_values)
 
                 # entry.attrs_values_entry.loc[:, attrs_targets] = attrs_gen_values
@@ -291,10 +297,13 @@ class Zipper():
     def init_df(self):
         return init_df(self.columns, self.columns_targets)
 
-    def next(self):
+    def next(self, heuristics):
         '''take pack with the size `self.pack_size` from todos,
         converting it with the self.ientry.to_entries funct before returning'''
         
+        if heuristics is not None:
+            self.hsort_todos(heuristics)
+
         # take a pack:
         self.current = self.todos.iloc[:self.pack_size]
         # self.current = self.todos.head(self.pack_size)
@@ -319,6 +328,13 @@ class Zipper():
         #     [self.current.loc[idx] for idx in index]),
         #        len(index))
         # return self.current.to_numpy()
+
+    def hsort_todos(self, heuristics):
+        # TODO: this seems use only one attr (the first given)
+        self.todos.sort_values(
+            by=self.columns_targets[::-1],  # the `goal` first
+            key=lambda e: heuristics[e.name],
+            inplace=True)
 
     def update(self, entries, k=0):
         '''Append all entries to the dones recursively.
@@ -393,15 +409,26 @@ def split(length, batch_size, start=0):
     return (batch_count, batchs_idxs)
 
 
+def test_hsort():
+    heuristics = {
+        'dtime': np.array([22, 23, 23,  7,  8,  8,  7]),
+        'goal': np.array([7,  0,  5, 22, 15, 20, 22])}
+    print("heuristics")
+    print(heuristics)
+
+    zipper = init_zipper(max_step=7)
+    zipper.load()
+    print("zipper.todos before")
+    print(zipper.todos)
+    # TODO: this seems use only one attr (the first given)
+    zipper.hsort_todos(heuristics)
+    print("zipper.todos after")
+    print(zipper.todos)
+
+
 def test_zipper0():
-    
-    zipper = Zipper(
-        init_entry=Entry(
-            attrs_names=["A", "B"],
-            attrs_values=[["a1", "a2", "a3"], ["b1", "b2", "b3"]],
-            attrs_targets=["dtime", "goal"],
-            max_step=10
-        ), pack_size=2)
+    zipper = init_zipper()
+
     zipper.load(use_backup=False)
     print("todos:")
     print(zipper.todos)
@@ -425,5 +452,17 @@ def test_zipper0():
     print(zipper.dones)
 
 
+def init_zipper(pack_size=3, max_step=10):
+    zipper = Zipper(
+        init_entry=Entry(
+            attrs_names=["A", "B"],
+            attrs_values=[["a1", "a2", "a3"], ["b1", "b2", "b3"]],
+            attrs_targets=["dtime", "goal"],
+            max_step=max_step
+        ), pack_size=pack_size)
+    return zipper
+
+    
 if __name__ == "__main__":
-    test_zipper0()
+    test_hsort()
+    # test_zipper0()

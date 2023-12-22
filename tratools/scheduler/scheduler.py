@@ -34,7 +34,28 @@ class CpuScheduler():
         self.columns_targets = self.ientry.attrs_targets
         self.target_tasks_params_names = target_tasks_params_names
 
-    def __call__(self, pack, cpu_count=8):
+    def estimating_from(self, pack):
+        '''Given the pack which have target_attrs, use them
+        to estimate `self.gmap_attrs_t_n_st` accumulatively
+        i.e. with use of previous runs.
+        '''
+        with self:
+            df = self.load(pack)
+            self.group_by_named(df)
+
+    def apply_heuristic_to(self, pack):
+        '''Apply estimated heuristics to given pack.'''
+        assert hasattr(self, 'gmap_attrs_t_n_st')
+
+        with self:
+            df = self.load(pack)
+            self.mk_heuristics(df)
+        return self.heuristics
+
+    def __call__(self, pack, cpu_count=8, solve=True):
+        '''self.gmap_attrs_t_n_st will be preserved in each call allowing
+        for the heuristics to be accumulative'''
+
         self.cpu_count = cpu_count
         with self:
             if self.dbg:
@@ -58,18 +79,22 @@ class CpuScheduler():
                 print("\n================ running: scheduler.mk_problem(df):")
             self.mk_problem()
 
-            if self.dbg:
-                print("\n================ running: scheduler.solve():")
-            self.solve()
+            if solve:
+                if self.dbg:
+                    print("\n================ running: scheduler.solve():")
+                self.solve()
 
-            if self.dbg:
-                self.plot()
+                if self.dbg:
+                    self.plot()
 
     def __enter__(self):
         '''Clear the `self` state'''
 
-        if hasattr(self, 'gmap_attrs_t_n_st'):
-            del self.gmap_attrs_t_n_st
+        # this do not need to be cleared since
+        # it will be accumulative:
+        # if hasattr(self, 'gmap_attrs_t_n_st'):
+        #     del self.gmap_attrs_t_n_st
+
         if hasattr(self, 'heuristics'):
             del self.heuristics
         if hasattr(self, 'tasks'):
@@ -96,13 +121,24 @@ class CpuScheduler():
         return df
 
     def group_by_named(self, df):
+        '''Group by each named attribute and having calculated
+        the targets ones store them in a `self.gmap_attrs_t_n_st` dict.
+        If `self.gmap_attrs_t_n_st` alredy exist it will be added to
+        so there is some accumulative effect.
+        
+        '''
         named_attrs = self.columns
         # named_attrs = columns[:-4]
         
-        gmap_attrs_t_n_st = dict(zip(
-            self.columns_targets,
-            list(map(lambda x: {}, self.columns_targets))))
-        # as ex: target_attrs = {"dtime":{}, "goal":{}}
+        if hasattr(self, 'gmap_attrs_t_n_st'):
+            if self.dbg:
+                print("using previous heuristics as the init one!")
+            gmap_attrs_t_n_st = self.gmap_attrs_t_n_st
+        else:
+            gmap_attrs_t_n_st = dict(zip(
+                self.columns_targets,
+                list(map(lambda x: {}, self.columns_targets))))
+            # as ex: target_attrs = {"dtime":{}, "goal":{}}
 
         target_attrs_names = self.columns_targets
 
@@ -111,10 +147,13 @@ class CpuScheduler():
             # factorize by each `nattr` ignoring others `nattrs`:
             nattr_classes = (df.loc[:, [nattr_name]+target_attrs_names]
                              .groupby(nattr_name))
-
+            
             # firstly apply sum as agregation in the `grouping by`
             # all targets columns independently:
             nattr_classes = nattr_classes.sum()
+            if self.dbg:
+                print("nattr_classes.sum:")
+                print(nattr_classes)
             
             for tattr_name in target_attrs_names: 
 
@@ -122,22 +161,61 @@ class CpuScheduler():
                 # (i.e for each value of `nattr_name` (i.e. `nattr_value`)
                 # for each `tattr_name` find the `tattr`s summed value):
                 # (ex: for these like ("nattr_value", "sum of tattr_value"))
-                table_nval_stval = dict(zip(list(nattr_classes.index.array),
+                nattr_values = list(nattr_classes.index.array)
+                table_nval_stval = dict(zip(nattr_values,
                                             list(nattr_classes[tattr_name])))
-
+                if self.dbg:
+                    print("tattr_name:", tattr_name)
+                    print("nattr_name:", nattr_name)
+                    print("table_nval_stval:")
+                    print(table_nval_stval)
+                    
                 # and map resulting table from tattr to nattr
-                gmap_attrs_t_n_st[tattr_name][nattr_name] = table_nval_stval
-                
+                gmap_attrs_t_n_st = self._update_gmap(
+                    gmap_attrs_t_n_st,
+                    nattr_classes, table_nval_stval,
+                    nattr_name, tattr_name)
+
         if self.dbg:
             print("\ngmap_attrs_t_n_st:")
             print(gmap_attrs_t_n_st)
 
         self.gmap_attrs_t_n_st = gmap_attrs_t_n_st
+        
+    def _update_gmap(self, gmap,
+                     nattr_classes, table_nval_stval,
+                     nattr_name, tattr_name):
+        ''' To map the direct product of `table_nval_stval` table
+        to directional: from `tattr` to `nattr`
+        and if there is a value (from previous `group_by_named` calls)
+        then update them.
+        '''
+        # ['b1', 'b2', 'b3', ...]
+        for nattr_value in list(nattr_classes.index.array):
+            # if the value is alredy present
+            # from the previous packs:
+            # if not it will just be empty dict for each tattr_name:
+            # like {dtime:{}, goal:{}}
+            if nattr_name in gmap[tattr_name]:
+                if nattr_value in gmap[tattr_name][nattr_name]:
+                    gmap[tattr_name][nattr_name][nattr_value]\
+                        += table_nval_stval[nattr_value]
+                # print("added")
+                # print(gmap[tattr_name][nattr_name])
+                # print(nattr_value)
+                # print(list(nattr_classes.index.array))
+            else:
+                gmap[tattr_name][nattr_name]\
+                    = table_nval_stval
+
+        return gmap
 
     def mk_heuristics(self, df):
         '''
         For estimating each row in the table
         according to the attrs values found in `self.group_by_named`:
+        - ``df`` -- the DataFrame to which  the `gmap_attrs_t_n_st`
+        been applied.
 
         - ``gmap_attrs_t_n_st`` -- map from the tattrs to
         aggregated with use of groupby the sum of nattrs  
@@ -159,10 +237,19 @@ class CpuScheduler():
             # row.index here means column name (i.e. nattr):
             # (since axis='columns' used in apply)
             row_converted = list(zip(list(row.index), list(row)))
+
+            # inner mapper of columns:
+            def mapper1(cNmVal):
+                n_st = gmap_attrs_t_n_st[param][cNmVal[0]]
+                if cNmVal[1] in n_st:
+                    return n_st[cNmVal[1]]
+                else:
+                    return 0
+
             row1 = list(map(
                 # columnNameVal is name/value
-                # for each attribute (nattr) in the row: 
-                lambda cNmVal: gmap_attrs_t_n_st[param][cNmVal[0]][cNmVal[1]],
+                # for each attribute (nattr) in the row:
+                mapper1,
                 row_converted))
             return sum(row1)
         # ex: row(cressie, cubic, even) ->
@@ -180,24 +267,45 @@ class CpuScheduler():
                 print("\n%s_expend" % tattr_name)
                 print(param_expend)
             param_expend = param_expend.to_numpy()
+            heuristics[tattr_name] = param_expend
+        self._heuristics = heuristics
 
-            # convert to int:
-            param_expend1 = (param_expend/param_expend.sum()*100).astype(int)
-            if tattr_name == "goal":
-                # invert: than less the goal is that better will the result be
-                # and hence the dalay_cost must be bigger.
-                param_expend1 = param_expend1.max()-param_expend1
-        
-            if self.dbg:
-                print("\ntattr_name:", tattr_name)
-                print("param_expend:")
-                print(param_expend1)
+        heuristics_norm = {}
+        for tattr_name in heuristics:
+            param_expend = heuristics[tattr_name]
+            param_expend1 = self._normalize_heuristic(tattr_name, param_expend)
 
-            heuristics[tattr_name] = param_expend1
-        self.heuristics = heuristics
+            heuristics_norm[tattr_name] = param_expend1
+        self.heuristics = heuristics_norm
+
         if self.dbg:
             print("heuristics:")
             print(self.heuristics)
+
+    def _normalize_heuristic(
+            self, tattr_name, param_expend, invert_goal=False):
+        '''
+        - ``invert_goal``-- use `True` for solving scheduler
+        since than quicker then better but for the heuristics use `False`
+        (as `dtime` one)'''
+
+        # convert to int:
+        param_expend1 = (param_expend/param_expend.sum()*100).astype(int)
+        if tattr_name == "goal" and invert_goal:
+            # invert: than less the goal is that better will the result be
+            # and hence the dalay_cost must be bigger.
+            param_expend1 = param_expend1.max()-param_expend1
+
+        if self.dbg:
+            print("\ntattr_name:", tattr_name)
+            print("param_expend:")
+            print(param_expend1)
+
+        return param_expend1
+
+    def has_heuristic(self):
+        return hasattr(self, 'gmap_attrs_t_n_st')
+        # return hasattr(self, 'heuristics')
 
     def mk_tasks(self, df):
         ''' for creating the tasks list'''
@@ -331,7 +439,90 @@ class CpuScheduler():
                 print(cpu_schedule)
 
 
-def test():
+def test2():
+    '''Test heuristics'''
+    scheduler = init_sceduler(dbg=False)
+    pack = scheduler.ientry.gen(3)
+    print("pack to estimate:")
+    print(scheduler.ientry.to_pandas(pack))
+    scheduler.estimating_from(pack)
+    print("estimated gmap_attrs_t_n_st:")
+    print(scheduler.gmap_attrs_t_n_st)
+    
+    pack1 = scheduler.ientry.gen(7)
+    print("pack1 to apply heuristics:")
+    print(scheduler.ientry.to_pandas(pack1))
+    
+    nheuristics = scheduler.apply_heuristic_to(pack1)
+    heuristics = scheduler._heuristics
+    print("estimated heuristic:")
+    print(heuristics)
+
+    print("\nestimated heuristic norm:")
+    print(nheuristics)
+
+
+def test_heuristic_unormal():
+    scheduler = init_sceduler(dbg=False)
+    pack = scheduler.ientry.gen(3)
+    scheduler.estimating_from(pack)
+    named_attrs = scheduler.columns
+    pack = scheduler.ientry.to_pandas(pack)
+    print(pack)
+
+    pack_named_only = pack.loc[:, named_attrs]
+    gmap = scheduler.gmap_attrs_t_n_st
+    heuristics = {}
+    for tname in scheduler.columns_targets:
+        heuristics[tname] = []
+        for entry in pack_named_only.to_numpy():
+            res = 0
+            nvalues = entry
+            # print("entry nvalues:", nvalues)
+            for idx, nattr in enumerate(named_attrs):
+                nvalue = nvalues[idx]
+                n_st = gmap[tname][nattr]
+                if nvalue in n_st:
+                    res += n_st[nvalue]
+            heuristics[tname].append(res)
+    print("heuristics0")
+    print(heuristics)
+    pack1 = scheduler.ientry.to_entries(pack)
+
+    scheduler.apply_heuristic_to(pack1)
+    # unnormalized:
+    heuristics1 = scheduler._heuristics
+    print("heuristics1:")
+    print(heuristics1)
+    for tname in heuristics:
+        assert np.all(heuristics[tname] == heuristics1[tname])
+    print("test succ")
+
+
+def test1(n=3):
+    '''Testing `schduler.gmap_attrs_t_n_st`
+    accumulativeness.'''
+
+    scheduler = init_sceduler()
+    for idx in range(n):
+        print("############# step %d ###########" % idx)
+        pack = scheduler.ientry.gen(4)
+        scheduler(pack, solve=False)
+        with open("/tmp/tmp.txt", "a") as f:
+            f.write(str(scheduler.gmap_attrs_t_n_st)+"\n")
+
+
+def test(cpu_count=2):
+    '''Basic test'''
+    scheduler = init_sceduler()
+
+    pack = scheduler.ientry.gen(4, fill_random=False)
+    print("pack:")
+    print(pack)
+    scheduler(pack, cpu_count=cpu_count)
+
+
+def init_sceduler(dbg=True):
     from tratools.zipper import Entry
 
     scheduler = CpuScheduler(
@@ -342,13 +533,13 @@ def test():
             max_step=10
         ), 
         target_tasks_params_names=["length", "delay_cost"],
-        dbg=True)
+        dbg=dbg)
     
-    pack = scheduler.ientry.gen(4)
-    print("pack:")
-    print(pack)
-    scheduler(pack)
+    return scheduler
+    
 
-    
 if __name__ == "__main__":
-    test()
+    test2()
+    # test_heuristic_unormal()
+    # test1()
+    # test()
