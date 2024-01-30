@@ -330,6 +330,7 @@ class Zipper():
         # return self.current.to_numpy()
 
     def hsort_todos(self, heuristics):
+        # TODO: same for dones before backups
         # TODO: this seems use only one attr (the first given)
         self.todos.sort_values(
             by=self.columns_targets[::-1],  # the `goal` first
