@@ -22,6 +22,11 @@ pip install tratools
 >>> progress.print_end()
 ```
 
+It also support multiprocessing:
+see `tratools/progress/progress_mpi.py:test_as_{process, thread}`
+for example.
+
+
 2. Zipper:
 ```
 >>> from tratools.zipper import Zipper, Entry
