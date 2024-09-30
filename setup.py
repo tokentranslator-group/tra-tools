@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     installed = setup(
         
-        name="tratools",
+        name="tra-tools",
 
         # use version (only) from setuptools_scm:
         use_scm_version={
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         description="some helpful tools",
         long_description=long_description,
         long_description_content_type="text/markdown",
-        url="https://github.com/tokentranslator-group/tratools",
+        url="https://github.com/tokentranslator-group/tra-tools",
         packages=lpackages,
         include_package_data=True,
         
