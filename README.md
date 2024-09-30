@@ -8,7 +8,7 @@ pip install -r requirements.txt
 
 ### Installation and running
 ```
-pip install tratools
+pip install tra-tools
 ```
 
 ### Usage:
