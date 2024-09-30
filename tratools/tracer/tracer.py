@@ -8,35 +8,35 @@ import re
 
 class Tracer():
     '''To trace some obj.call internally i.e. with use of import system.
-    Usage:
+    Usage::
 
-    from tratools.tracer import Tracer
+    >>> from tratools.tracer import Tracer
 
-    tracer = Tracer(
-        show_source=True,
+    >>> tracer = Tracer(
+    >>>    show_source=True,
 
-        # events to show:
-        show_call=True,
-        show_line=True,
-        show_return=False,
+    >>>    # events to show:
+    >>>    show_call=True,
+    >>>    show_line=True,
+    >>>    show_return=False,
 
-        # inclusion/exclusion manually:
-        # include_modules=["test"],
-        # include_funcs=["func"],
-        exclude_funcs=["<listcomp>"],
-        # exclude_modules=["tracer"],
+    >>>    # inclusion/exclusion manually:
+    >>>    # include_modules=["test"],
+    >>>    # include_funcs=["func"],
+    >>>    exclude_funcs=["<listcomp>"],
+    >>>    # exclude_modules=["tracer"],
 
-        show_global_modules=False,  # from sys.path
+    >>>    show_global_modules=False,  # from sys.path
 
-        show_name_module=True,  # show module name
-        show_name_func=True,   # show func name
+    >>>    show_name_module=True,  # show module name
+    >>>    show_name_func=True,   # show func name
 
-        separator="    ->   "  # to separate module and func names
-    )
-    test = tracer(test_opt)
+    >>>    separator="    ->   "  # to separate module and func names
+    >>> )
+    >>> test = tracer(test_opt)
 
-    # run with same args as test_opt:
-    test(steps=1, t1=0.3, lr=0.1, deg=3)
+    >>> # run with same args as test_opt:
+    >>> test(steps=1, t1=0.3, lr=0.1, deg=3)
     '''
 
     def __init__(self,

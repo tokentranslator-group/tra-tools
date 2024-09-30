@@ -24,7 +24,8 @@ pip install tratools
 
 It also support multiprocessing:
 see `tratools/progress/progress_mpi.py:test_as_{process, thread}`
-for example.
+as example. Or just run it:
+`$ python3 -c "from tratools.progress.progress_mpi import run;run()"`
 
 
 2. Zipper:

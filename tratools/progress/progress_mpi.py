@@ -45,7 +45,7 @@ class ProgressMasterBase():
         # proccesses having been started by it
         # so unless `time.sleep()` is not used no
         # results will be produced
-        self.process.join()
+        self.process.join(1)
         pass
 
     def __call__(self):
@@ -53,7 +53,8 @@ class ProgressMasterBase():
         return self
 
     def run(self):
-        
+
+        # TODO: try/finally to catch errors
         while True:
             if self.queue.empty():
                 continue
@@ -137,8 +138,9 @@ class ProgressWorker(ProgressCmd):
         self.queue.put_nowait((self.thread_idx, None))
 
     # for compatibility with some libs:
-    def __call__(self):
-        pass
+    def __call__(self, steps):
+        self.set_steps(steps)
+        return self
 
 
 # ================= TESTS ====================:
