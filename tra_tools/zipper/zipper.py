@@ -1,3 +1,4 @@
+# $ python3 -m tra_tools.zipper.zipper
 import os
 import numpy as np
 import pandas as pd

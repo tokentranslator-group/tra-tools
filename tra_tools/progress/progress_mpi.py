@@ -1,10 +1,10 @@
-# $ python3 -c "from tratools.progress.progress_mpi import run;run()"
+# $ python3 -c "from tra_tools.progress.progress_mpi import run;run()"
 import multiprocessing as mp
 import threading
 import time
 
 # from progress.prgress_cmd import ProgressCmd
-import tratools.progress as progress_cmd
+import tra_tools.progress as progress_cmd
 ProgressCmd = progress_cmd.ProgressCmd
 
 

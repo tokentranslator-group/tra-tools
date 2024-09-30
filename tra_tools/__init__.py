@@ -1,7 +1,7 @@
-import tratools.zipper.zipper as zipper
-import tratools.scheduler.scheduler as scheduler
-import tratools.progress.progress_cmd as progress
-import tratools.tracer.tracer as tracer
+import tra_tools.zipper.zipper as zipper
+import tra_tools.scheduler.scheduler as scheduler
+import tra_tools.progress.progress_cmd as progress
+import tra_tools.tracer.tracer as tracer
 
 __all__ = [
     "zipper",

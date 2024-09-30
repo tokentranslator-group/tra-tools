@@ -1,3 +1,4 @@
+# $ python3 -m tra_tools.scheduler.schedule
 import numpy as np
 from functools import reduce
 
@@ -523,7 +524,7 @@ def test(cpu_count=2):
 
 
 def init_sceduler(dbg=True):
-    from tratools.zipper import Entry
+    from tra_tools.zipper import Entry
 
     scheduler = CpuScheduler(
         init_entry=Entry(

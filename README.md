@@ -123,3 +123,11 @@ as example. Or just run it:
 
     # see `tratools.scheduler.test()` for details.
 ```
+
+### Tests:
+```
+$ python3 -c "from tra_tools.progress.progress_mpi import run;run()"
+$ python3 -m tra_tools.zipper.zipper
+$ python3 -m tra_tools.tracer.test
+$ python3 -m tra_tools.scheduler.schedule
+```

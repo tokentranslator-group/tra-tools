@@ -10,7 +10,7 @@ class Tracer():
     '''To trace some obj.call internally i.e. with use of import system.
     Usage::
 
-    >>> from tratools.tracer import Tracer
+    >>> from tra_tools.tracer import Tracer
 
     >>> tracer = Tracer(
     >>>    show_source=True,
@@ -51,7 +51,7 @@ class Tracer():
                  show_name_func=True,
                  show_name_module=True,
                  separator="->",
-                 to_file=True, filename="/tmp/tratools.tracer.log.txt"):
+                 to_file=True, filename="/tmp/tra_tools.tracer.log.txt"):
         self.clear_context()
 
         self.include_funcs = include_funcs

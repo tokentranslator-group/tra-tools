@@ -1,4 +1,5 @@
-from tracer import Tracer, func
+# $ python3 -m tra_tools.tracer.test
+from tra_tools.tracer import Tracer, func
 import math
 import numpy as np
 
@@ -13,7 +14,7 @@ def f(x):
 
 if __name__ == "__main__":
     print("starting:")
-
+    
     tracer = Tracer(
         show_source=True, 
         show_call=True,
@@ -32,3 +33,4 @@ if __name__ == "__main__":
     )
     f1 = tracer(f)
     f1(3)
+    print("done, see result in:", tracer.filename)

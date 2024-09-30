@@ -1,5 +1,5 @@
 import re
-from tratools.progress.progress_cmd import ProgressCmd
+from tra_tools.progress.progress_cmd import ProgressCmd
 
 
 class StdoutProgresses():
@@ -16,7 +16,7 @@ class StdoutProgresses():
         self.progresses = []
 
         if notebook is not None:
-            # from tratools.progress.progress_notebook import ProgressNotebook
+            # from tra_tools.progress.progress_notebook import ProgressNotebook
             self.progresses.append(notebook)
             # self.progresses.append(ProgressNotebook(STEPS,
             #                                         prefix=self.prefix))
