@@ -19,3 +19,17 @@ build/**
 dist/
 dist/*
 dist/**
+
+doc/_templates
+doc/_templates/*
+doc/_templates/**
+
+doc/_build/
+doc/_build/*
+doc/_build/**
+
+doc/_static/
+doc/_static/*
+doc/_static/**
+
+*.bat
