@@ -15,7 +15,7 @@ pip install tra-tools
 
 1. Progress:
 ```
->>> import tratools.progresses.progress_cmd as progress_cmd
+>>> import tra_tools.progresses.progress_cmd as progress_cmd
 >>> ProgressCmd = progress_cmd.ProgressCmd
 >>> progress = ProgressCmd(steps, prefix="loading:")
 >>> progress.succ(idx)  # somewhere in loop
@@ -30,7 +30,7 @@ as example. Or just run it:
 
 2. Zipper:
 ```
->>> from tratools.zipper import Zipper, Entry
+>>> from tra_tools.zipper import Zipper, Entry
 >>> zipper = Zipper(
         init_entry=Entry(
             attrs_names=["A", "B"],
@@ -99,8 +99,8 @@ as example. Or just run it:
 
 3. CpuScheduler:
 ```
-    >>> from tratools.scheduler import CpuScheduler
-    >>> from tratools.zipper import Entry
+    >>> from tra_tools.scheduler import CpuScheduler
+    >>> from tra_tools.zipper import Entry
 
     >>> scheduler = CpuScheduler(
     >>>    init_entry=Entry(
@@ -124,10 +124,28 @@ as example. Or just run it:
     # see `tratools.scheduler.test()` for details.
 ```
 
+4. A Twisted web Logger:
+```
+    from tra_tools.logger import LogRunner
+    class Process():
+        '''The progress for testing LogRunner'''
+        def step(self):
+           i = 0
+           while True:
+               i += 1 
+               time.sleep(0.3)
+               yield i
+
+    runner = LogRunner(Process())
+    runner.run()
+    # the logs will be being send to http://localhost:8081 
+```
+ 
 ### Tests:
 ```
 $ python3 -c "from tra_tools.progress.progress_mpi import run;run()"
 $ python3 -m tra_tools.zipper.zipper
 $ python3 -m tra_tools.tracer.test
 $ python3 -m tra_tools.scheduler.schedule
+$ python3 -m tra_tools.logger.tests
 ```
