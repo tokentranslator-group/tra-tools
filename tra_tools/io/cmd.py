@@ -15,7 +15,7 @@ def parse_cmd_arg(task_name, arg_name, default=None, defaults=[]):
                 raise Exception(
                     "Task: '%s': '%s' argument support only: '%s'"
                     % (task_name, name, str(defaults)))
-        print("Task: %s: filename: %s" % (task_name, value))
+        print("Task: %s: %s: %s" % (task_name, name, value))
     else:
         if default is None:
             raise Exception("Task: '%s': '%s' argument needed"
